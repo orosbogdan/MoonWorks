@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using MoonWorks.Audio;
 using MoonWorks.Graphics;
 
 namespace MoonWorks.AsyncIO;
@@ -16,11 +15,6 @@ public class AsyncFileLoader : IDisposable
 	enum LoadType
 	{
 		CompressedImage,
-		AudioWav,
-		AudioOggStatic,
-		AudioOggStreaming,
-		AudioQoaStatic,
-		AudioQoaStreaming,
 		Custom
 	}
 
@@ -77,70 +71,6 @@ public class AsyncFileLoader : IDisposable
 		PendingLoads.Add(new LoadData(file, LoadType.CompressedImage, texture, null));
 	}
 
-	/// <summary>
-	/// Asynchronously load audio from a WAV file.
-	/// </summary>
-	public void EnqueueWavLoad(string file, AudioBuffer buffer)
-	{
-		if (Status == AsyncFileLoaderStatus.Running)
-		{
-			Logger.LogError("AsyncFileLoader already running!");
-			return;
-		}
-		PendingLoads.Add(new LoadData(file, LoadType.AudioWav, buffer, null));
-	}
-
-	/// <summary>
-	/// Asynchronously load and decode an OGG file into an audio buffer.
-	/// </summary>
-	public void EnqueueOggStaticLoad(string file, AudioBuffer audioBuffer)
-	{
-		if (Status == AsyncFileLoaderStatus.Running)
-		{
-			Logger.LogError("AsyncFileLoader already running!");
-			return;
-		}
-		PendingLoads.Add(new LoadData(file, LoadType.AudioOggStatic, audioBuffer, null));
-	}
-
-	/// <summary>
-	/// Asynchronously load an OGG file into memory.
-	/// </summary>
-	public void EnqueueOggStreamingLoad(string file, AudioDataOgg audioDataOgg)
-	{
-		if (Status == AsyncFileLoaderStatus.Running)
-		{
-			Logger.LogError("AsyncFileLoader already running!");
-			return;
-		}
-		PendingLoads.Add(new LoadData(file, LoadType.AudioOggStreaming, audioDataOgg, null));
-	}
-
-	/// <summary>
-	/// Asynchronously load and decode a QOA file into an audio buffer.
-	/// </summary>
-	public void EnqueueQoaStaticLoad(string file, AudioBuffer audioBuffer)
-	{
-		if (Status == AsyncFileLoaderStatus.Running)
-		{
-			Logger.LogError("AsyncFileLoader already running!");
-			return;
-		}
-		PendingLoads.Add(new LoadData(file, LoadType.AudioQoaStatic, audioBuffer, null));
-	}
-
-	/// <summary>
-	/// Asynchronously load a QOA file into memory.
-	/// </summary>
-	public void EnqueueQoaStreamingLoad(string file, AudioDataQoa audioDataQoa)
-	{
-		if (Status == AsyncFileLoaderStatus.Running)
-		{
-			Logger.LogError("AsyncFileLoader already running!");
-			return;
-		}
-		PendingLoads.Add(new LoadData(file, LoadType.AudioQoaStreaming, audioDataQoa, null));
-	}
 
 	/// <summary>
 	/// Submit async file loads and execute load callbacks on a thread until all are complete.
@@ -188,36 +118,6 @@ public class AsyncFileLoader : IDisposable
 							break;
 						}
 
-						case LoadType.AudioWav:
-						{
-							LoadWavData((AudioBuffer) loadData.Object, span);
-							break;
-						}
-
-						case LoadType.AudioOggStatic:
-						{
-							LoadOggStaticData((AudioBuffer) loadData.Object, span);
-							break;
-						}
-
-						case LoadType.AudioOggStreaming:
-						{
-							LoadOggStreamingData((AudioDataOgg) loadData.Object, span);
-							break;
-						}
-
-						case LoadType.AudioQoaStatic:
-						{
-							LoadQoaStaticData((AudioBuffer) loadData.Object, span);
-							break;
-						}
-
-						case LoadType.AudioQoaStreaming:
-						{
-							LoadQoaStreamingData((AudioDataQoa) loadData.Object, span);
-							break;
-						}
-
 						case LoadType.Custom:
 						{
 							PerformLoadCallback(loadData.Callback, loadData.Object, span);
@@ -262,30 +162,6 @@ public class AsyncFileLoader : IDisposable
 		ResourceUploader.Upload();
 	}
 
-	private void LoadWavData(AudioBuffer audioBuffer, ReadOnlySpan<byte> data)
-	{
-		AudioDataWav.SetData(audioBuffer, data);
-	}
-
-	private void LoadOggStaticData(AudioBuffer audioBuffer, ReadOnlySpan<byte> data)
-	{
-		AudioDataOgg.SetData(audioBuffer, data);
-	}
-
-	private void LoadOggStreamingData(AudioDataOgg audioDataOgg, ReadOnlySpan<byte> data)
-	{
-		audioDataOgg.Open(data);
-	}
-
-	private void LoadQoaStaticData(AudioBuffer audioBuffer, ReadOnlySpan<byte> data)
-	{
-		AudioDataQoa.SetData(audioBuffer, data);
-	}
-
-	private void LoadQoaStreamingData(AudioDataQoa audioDataQoa, ReadOnlySpan<byte> data)
-	{
-		audioDataQoa.Open(data);
-	}
 
 	private void PerformLoadCallback(OnFileLoad callback, object callbackObject, ReadOnlySpan<byte> data)
 	{

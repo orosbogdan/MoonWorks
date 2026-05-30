@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using MoonWorks.Video;
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
 using MoonWorks.Storage;
@@ -271,8 +270,6 @@ public class GraphicsDevice : IDisposable
 
 		TextVertexShader = textVertShader;
 		TextFragmentShader = textFragShader;
-
-		TextVertexInputState = VertexInputState.CreateSingleBinding<Font.Vertex>(0);
 
 		PointSampler = Sampler.Create(this, SamplerCreateInfo.PointClamp);
 		LinearSampler = Sampler.Create(this, SamplerCreateInfo.LinearClamp);
@@ -699,14 +696,6 @@ public class GraphicsDevice : IDisposable
 			{
 				lock (resources)
 				{
-					// Dispose video players first to avoid race condition on threaded decoding
-					foreach (var resource in resources)
-					{
-						if (resource.Target is VideoAV1 player)
-						{
-							player.Dispose();
-						}
-					}
 
 					// Dispose everything else
 					foreach (var resource in resources)

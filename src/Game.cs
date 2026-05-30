@@ -1,5 +1,4 @@
-﻿using SDL3;
-using MoonWorks.Audio;
+using SDL3;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
 using System.Text;
@@ -7,7 +6,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MoonWorks.Storage;
-using MoonWorks.Video;
 using System.Collections.Generic;
 
 namespace MoonWorks
@@ -45,8 +43,6 @@ namespace MoonWorks
 		bool Initialized = false;
 
 		public GraphicsDevice GraphicsDevice { get; }
-		public AudioDevice AudioDevice { get; }
-		public VideoDevice VideoDevice { get; }
 		public Inputs Inputs { get; }
 
 		/// <summary>
@@ -125,11 +121,6 @@ namespace MoonWorks
 			Logger.LogInfo("Applying frame pacing settings...");
 			SetFramePacingSettings(framePacingSettings);
 
-			Logger.LogInfo("Initializing audio thread...");
-			AudioDevice = new AudioDevice();
-
-			Logger.LogInfo("Initializing video thread...");
-			VideoDevice = new VideoDevice(GraphicsDevice);
 
 			// handle initial system events so we can get initial controller settings, etc
 			GatherSDLEvents();
@@ -169,14 +160,9 @@ namespace MoonWorks
 				window.Dispose();
 			}
 
-			Logger.LogInfo("Closing video thread...");
-			VideoDevice.Dispose();
 
 			Logger.LogInfo("Disposing graphics device...");
 			GraphicsDevice.Dispose();
-
-			Logger.LogInfo("Closing audio thread...");
-			AudioDevice.Dispose();
 
 			Logger.LogInfo("Disposing title storage...");
 			RootTitleStorage.Dispose();
@@ -352,7 +338,6 @@ namespace MoonWorks
 				Logger.LogInfo($"A frame took too long, updated {updateCount} times to catch up, remaining accumulator time {AccumulatedUpdateTime.TotalMilliseconds} ms");
 			}
 
-			AudioDevice.WakeThread();
 
 			// Timestep alpha should be 0 if we are in latency-optimized mode.
 			var alpha = FramePacingSettings.Mode == FramePacingMode.LatencyOptimized ?
