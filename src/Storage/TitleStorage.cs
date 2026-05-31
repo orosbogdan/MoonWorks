@@ -73,6 +73,13 @@ public class TitleStorage : IDisposable
 		return true;
 	}
 
+	public string GetOSSpecificPath(string path)
+	{
+		if (OperatingSystem.IsWindows())
+			return path.Replace(@"\", @"/");
+		return path;
+	}
+
 	/// <summary>
 	/// Opens up a read-only container for the application's filesystem.
 	/// </summary>

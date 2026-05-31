@@ -1,3 +1,9 @@
 <Solution>
-  <Project Path="MoonWorks.csproj" />
+  <Folder Name="/libs/">
+    <Project Path="lib/FAudio/csharp/FAudio-CS.Core.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="lib/SDL3-CS/SDL3/SDL3.Core.csproj" />
+  </Folder>
+  <Project Path="src/MoonWorks.csproj" />
 </Solution>

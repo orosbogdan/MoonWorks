@@ -1,10 +1,10 @@
+using MoonWorks.Storage;
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using SDL = MoonWorks.Graphics.SDL_GPU;
-
-using MoonWorks.Storage;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
 
@@ -615,6 +615,166 @@ public class GraphicsDevice : IDisposable
 
 		return (TextureFormat) SDL.SDL_GetGPUSwapchainTextureFormat(Handle, window.Handle);
 	}
+
+	
+	
+	public unsafe ComputePipeline LoadComputePipeline(TitleStorage storage, string name)
+	{
+		string basePath = "";
+		string entryPointName;
+		string extension;
+
+		string compiledFolder;
+		ShaderFormat shaderFormat;
+
+
+		switch (Backend)
+		{
+			case "vulkan":
+				compiledFolder = "Shaders/Compiled/SPIRV";
+				extension = "spv";
+				entryPointName = "main";
+				shaderFormat = ShaderFormat.SPIRV;
+				break;
+
+			case "metal":
+				compiledFolder = "Shaders/Compiled/MSL";
+				extension = "msl";
+				entryPointName = "main0";
+				shaderFormat = ShaderFormat.MSL;
+				break;
+
+			case "direct3d11":
+				compiledFolder = "Shaders/Compiled/DXBC";
+				extension = "dxbc";
+				entryPointName = "main";
+				shaderFormat = ShaderFormat.DXBC;
+				break;
+
+			case "direct3d12":
+				compiledFolder = "Shaders/Compiled/DXIL";
+				extension = "dxil";
+				entryPointName = "main";
+				shaderFormat = ShaderFormat.DXIL;
+				break;
+
+
+			default:
+				throw new ArgumentException("This shouldn't happen!");
+		}
+
+		var jsonPath = $"Shaders/Json/{string.Format("{0}.json", name)}";
+
+		storage.GetFileSize(jsonPath, out var size);
+
+		byte* ptr = (byte*) NativeMemory.Alloc((nuint) size);
+		Span<byte> bytes = new Span<byte>(ptr, (int) size);
+
+		storage.ReadFile(jsonPath, bytes);
+
+		var str = InteropUtilities.DecodeFromUTF8Buffer(ptr, (int) size);
+		var createComputePipelineInfo = JsonSerializer.Deserialize<ComputePipelineCreateInfo>(str);
+		createComputePipelineInfo = createComputePipelineInfo with { Format = shaderFormat };
+		NativeMemory.Free(ptr);
+		var path = $"{compiledFolder}/{string.Format("{0}.{1}", name, extension)}";
+
+		Console.WriteLine($"Loading compute pipeline {path}...");
+
+		var computePipeline = ComputePipeline.Create(this, storage, storage.GetOSSpecificPath(path), entryPointName, createComputePipelineInfo);
+
+		return computePipeline;
+	}
+
+	public unsafe Shader LoadShader(TitleStorage storage, string name)
+	{
+		string basePath = "";
+
+		var jsonPath = $"Shaders/Json/{string.Format("{0}.json", name)}";
+
+		storage.GetFileSize(jsonPath, out var size);
+
+		byte* ptr = (byte*) NativeMemory.Alloc((nuint) size);
+		Span<byte> bytes = new Span<byte>(ptr, (int) size);
+
+		storage.ReadFile(jsonPath, bytes);
+
+		var str = InteropUtilities.DecodeFromUTF8Buffer(ptr, (int) size);
+		var createShaderInfo = JsonSerializer.Deserialize<ShaderCreateInfo>(str);
+
+		ShaderFormat shaderFormat;
+
+		string extension = "vulkan";
+		string entryPointName;
+		string compiledFolder;
+
+
+		switch (Backend)
+		{
+			case "vulkan":
+				compiledFolder = "Shaders/Compiled/SPIRV";
+				extension = "spv";
+				entryPointName = "main";
+				shaderFormat = ShaderFormat.SPIRV;
+				break;
+
+			case "metal":
+				compiledFolder = "Shaders/Compiled/MSL";
+				extension = "msl";
+				entryPointName = "main0";
+				shaderFormat = ShaderFormat.MSL;
+				break;
+
+			case "direct3d11":
+				compiledFolder = "Shaders/Compiled/DXBC";
+				extension = "dxbc";
+				entryPointName = "main";
+				shaderFormat = ShaderFormat.DXBC;
+				break;
+
+			case "direct3d12":
+				compiledFolder = "Shaders/Compiled/DXIL";
+				extension = "dxil";
+				entryPointName = "main";
+				shaderFormat = ShaderFormat.DXIL;
+				break;
+			default:
+				throw new ArgumentException("This shouldn't happen!");
+		}
+
+		var createInfoWithFormat = createShaderInfo with { Format = shaderFormat };
+
+
+		var assembly = typeof(GraphicsDevice).Assembly;
+
+
+		var path = $"{compiledFolder}/{string.Format("{0}.{1}", name, extension)}";
+
+
+		storage.GetFileSize(path, out var shaderSize);
+		var buffer = NativeMemory.Alloc((nuint) shaderSize);
+		var span = new Span<byte>(buffer, (int) shaderSize);
+		storage.ReadFile(path, span);
+
+
+
+		createInfoWithFormat.Stage = name.EndsWith("vert") ? ShaderStage.Vertex : ShaderStage.Fragment;
+		createInfoWithFormat.Name = name;
+
+
+		Console.WriteLine($"Loading shader {path}...");
+		var result = Shader.Create(
+			this,
+			span,
+			entryPointName,
+			createInfoWithFormat
+		);
+
+		NativeMemory.Free(ptr);
+		NativeMemory.Free(buffer);
+
+		return result;
+	}
+
 
 	private unsafe Shader LoadShaderFromManifest(string backend, string name, ShaderCreateInfo createInfo)
 	{

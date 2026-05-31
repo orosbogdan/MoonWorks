@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<DefaultItemExcludes>$(DefaultItemExcludes);lib\**\*</DefaultItemExcludes>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="lib\**" />
+	  <Compile Remove="src\**" />
+	  <EmbeddedResource Remove="lib\**" />
+	  <EmbeddedResource Remove="src\**" />
+	  <None Remove="lib\**" />
+	  <None Remove="src\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="MoonWorks.dll.config">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\lib\FAudio\csharp\FAudio-CS.Core.csproj" />
+	  <ProjectReference Include="..\lib\SDL3-CS\SDL3\SDL3.Core.csproj" />
+	</ItemGroup>
+</Project>
