@@ -21,7 +21,6 @@ Join our Discord! https://discord.gg/ujhwdkHmhN
 ## Dependencies
 
 * [SDL3](https://github.com/flibitijibibo/SDL3-CS) - Window management, Input, Graphics
-* [FAudio](https://github.com/FNA-XNA/FAudio) - Audio
 
 Prebuilt native dependencies can be obtained here: https://moonside.games/files/moonlibs.tar.gz
 
